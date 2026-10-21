@@ -195,13 +195,15 @@ const Navbar = () => {
             </button>
 
             {/* Company Admin Login */}
-            <button
-              type="button"
-              onClick={handleAdminClick}
-              className="rounded-xl bg-green-900 px-3 py-2 text-sm font-bold text-white transition hover:bg-green-950 md:px-4"
-            >
-              Admin
-            </button>
+            {!token && (
+              <button
+                type="button"
+                onClick={handleAdminClick}
+                className="rounded-xl bg-green-900 px-3 py-2 text-sm font-bold text-white transition hover:bg-green-950 md:px-4"
+              >
+                Admin
+              </button>
+            )}
 
             {/* Notifications */}
             {token && (

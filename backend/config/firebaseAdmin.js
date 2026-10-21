@@ -1,6 +1,12 @@
 const { cert, getApps, initializeApp } = require("firebase-admin/app");
+const path = require("path");
 
-const serviceAccount = require("../config/firebase-service-account.json");
+const serviceAccountPath = path.join(
+  __dirname,
+  "firebase-service-account.json",
+);
+
+const serviceAccount = require(serviceAccountPath);
 
 const firebaseAdmin =
   getApps().length === 0
