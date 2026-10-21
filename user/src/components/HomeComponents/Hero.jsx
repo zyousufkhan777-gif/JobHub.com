@@ -27,7 +27,7 @@ const Hero = () => {
 
   // Company button
   const handleCompanyClick = () => {
-    window.location.href = "http://localhost:5174/register";
+    window.location.href = "https://job-hub-com-71te.vercel.app/register";
   };
 
   return (

@@ -196,7 +196,7 @@ const TopCompanies = () => {
                 {/* Company Information */}
                 <div className="mt-5">
                   <h3 className="text-xl font-bold text-gray-900 transition group-hover:text-green-600">
-                    {company.name || "Unnamed Company"}
+                    {company.companyName || "Unnamed Company"}
                   </h3>
 
                   <p className="mt-1 text-sm font-medium text-green-500">

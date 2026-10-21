@@ -106,7 +106,7 @@ const Navbar = () => {
 
   // Navigate to the separate company application.
   const handleAdminClick = () => {
-    window.location.href = `${COMPANY_URL}/login`;
+    window.location.href = 'https://job-hub-com-56jv.vercel.app/login';
   };
 
   const handleLogout = () => {

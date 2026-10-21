@@ -72,8 +72,8 @@ const CompanyDetails = () => {
 
       setError(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to load company details."
+        err.message ||
+        "Failed to load company details."
       );
     } finally {
       setLoading(false);
@@ -85,7 +85,7 @@ const CompanyDetails = () => {
   }, [fetchCompanyDetails]);
 
   const companyName =
-    company?.name || company?.companyName || "Company";
+    company?.companyName || "Company";
 
   const companyLogo =
     company?.logo || company?.companyLogo || company?.profilePhoto || "";
