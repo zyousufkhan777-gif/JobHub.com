@@ -56,7 +56,9 @@ const FeaturedJobs = () => {
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2">
         {featuredJobs.length > 0 ? (
           featuredJobs.map((job, index) => {
-            const companyName = getCompanyName(job.company);
+            const companyName = getCompanyName(job.company?.companyName);
+
+
 
             const companyLogo =
               job.company && typeof job.company === "object"

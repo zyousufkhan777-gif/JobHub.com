@@ -278,7 +278,7 @@ const Joblist = () => {
                 filteredJobs.map((job) => {
                   const companyName =
                     typeof job.company === "object"
-                      ? job.company?.name
+                      ? job.company?.companyName
                       : null;
 
                   const companyLogo =

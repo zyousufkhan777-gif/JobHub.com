@@ -123,7 +123,7 @@ const getallJob = async (req, res) => {
       isActive: true,
     })
       .sort({ createdAt: -1 })
-      .populate("company", "name logo");
+      .populate("company", "logo companyName");
 
     return res.status(200).json({
       success: true,

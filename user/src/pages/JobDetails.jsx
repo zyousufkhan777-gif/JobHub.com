@@ -307,7 +307,7 @@ const JobDetails = () => {
   // Company information
   const companyName =
     job.company && typeof job.company === "object"
-      ? job.company.name || "Company"
+      ? job.company.companyName || "Company"
       : "Company";
 
   const companyLogo =
