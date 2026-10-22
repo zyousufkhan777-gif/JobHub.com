@@ -19,16 +19,17 @@ const UpdateProfile = async (req, res) => {
       experience,
     } = req.body;
 
-    const imageUpload = req.file;
-
-    // Validate required fields
     if (
-      !name?.trim() ||
+      typeof name !== "string" ||
+      !name.trim() ||
       phone == null ||
-      !location?.trim() ||
+      typeof location !== "string" ||
+      !location.trim() ||
       skills == null ||
-      !education?.trim() ||
-      !experience?.trim()
+      typeof education !== "string" ||
+      !education.trim() ||
+      typeof experience !== "string" ||
+      !experience.trim()
     ) {
       return res.status(400).json({
         success: false,
@@ -58,15 +59,14 @@ const UpdateProfile = async (req, res) => {
 
     let imageUrl = user.profilePhoto;
 
-    if (imageUpload) {
-      const uploadImage = await cloudinary.uploader.upload(imageUpload.path, {
+    if (req.file) {
+      const uploadedImage = await cloudinary.uploader.upload(req.file.path, {
         resource_type: "image",
       });
 
-      imageUrl = uploadImage.secure_url;
+      imageUrl = uploadedImage.secure_url;
     }
 
-    // Update user information
     user.name = name.trim();
 
     if (professionalTitle !== undefined) {
@@ -75,6 +75,7 @@ const UpdateProfile = async (req, res) => {
 
     user.phone = phone;
     user.location = location.trim();
+
     user.skills = Array.isArray(skills)
       ? skills
       : typeof skills === "string"
@@ -119,16 +120,33 @@ const UpdateProfile = async (req, res) => {
 // GET ALL ACTIVE JOBS
 const getallJob = async (req, res) => {
   try {
-    const jobs = await JobModel.find({
-      isActive: true,
-    })
+    const jobs = await JobModel.find({ isActive: true })
       .sort({ createdAt: -1 })
-      .populate("company", "logo companyName");
+      .populate({
+        path: "company",
+        select: "companyName logo",
+      })
+      .lean();
+
+    const formattedJobs = jobs.map((job) => ({
+      ...job,
+      company:
+        job.company && typeof job.company === "object"
+          ? {
+              _id: job.company._id,
+              companyName:
+                typeof job.company.companyName === "string"
+                  ? job.company.companyName.trim()
+                  : "",
+              logo: job.company.logo || "",
+            }
+          : null,
+    }));
 
     return res.status(200).json({
       success: true,
-      count: jobs.length,
-      jobs,
+      count: formattedJobs.length,
+      jobs: formattedJobs,
     });
   } catch (error) {
     console.error("Get All Jobs Error:", error);
@@ -141,6 +159,7 @@ const getallJob = async (req, res) => {
 };
 
 // GET JOB DETAILS
+
 const jobDetails = async (req, res) => {
   try {
     const { id } = req.params;
@@ -148,37 +167,104 @@ const jobDetails = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid job ID.",
+        message: "Invalid job ID",
       });
     }
 
-    const job = await JobModel.findOne({
-      _id: id,
-      isActive: true,
-    }).populate("company", "name logo");
+    const job = await JobModel.findById(id).lean();
 
     if (!job) {
       return res.status(404).json({
         success: false,
-        message: "Job not found.",
+        message: "Job not found",
       });
     }
 
+    const company = await CompanyModel.findById(job.company)
+      .select("companyName logo")
+      .lean();
+
+    const formattedJob = {
+      ...job,
+      company: company
+        ? {
+            _id: company._id,
+            companyName:
+              typeof company.companyName === "string"
+                ? company.companyName.trim()
+                : "",
+            logo: company.logo || "",
+          }
+        : null,
+    };
+
+    console.log("JOB DETAILS COMPANY:", formattedJob.company);
+
     return res.status(200).json({
       success: true,
-      job,
+      job: formattedJob,
     });
   } catch (error) {
-    console.error("Get Job Details Error:", error);
+    console.error("Job Details Error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch job details.",
+      message: "Failed to fetch job details",
     });
   }
 };
 
-// GET ALL ACTIVE COMPANIES
+// GET COMPANY DETAILS
+const companyDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid company ID.",
+      });
+    }
+
+    const company = await CompanyModel.findById(id).lean();
+
+    if (!company) {
+      return res.status(404).json({
+        success: false,
+        message: "Company not found.",
+      });
+    }
+
+    const jobs = await JobModel.find({
+      company: company._id,
+      isActive: true,
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      company: {
+        ...company,
+        companyName:
+          typeof company.companyName === "string"
+            ? company.companyName.trim()
+            : "",
+      },
+      jobs,
+      jobCount: jobs.length,
+    });
+  } catch (error) {
+    console.error("Company Details Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch company details.",
+    });
+  }
+};
+
+// GET ALL COMPANIES
 const getallCompanies = async (req, res) => {
   try {
     const companies = await CompanyModel.find({})
@@ -208,6 +294,10 @@ const getallCompanies = async (req, res) => {
 
     const companiesWithJobCount = companies.map((company) => ({
       ...company,
+      companyName:
+        typeof company.companyName === "string"
+          ? company.companyName.trim()
+          : "",
       jobCount: countMap.get(company._id.toString()) || 0,
     }));
 
@@ -222,49 +312,6 @@ const getallCompanies = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch companies.",
-    });
-  }
-};
-
-// GET COMPANY DETAILS
-const companyDetails = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid company ID.",
-      });
-    }
-
-    // Search without isActive filter for debugging
-    const company = await CompanyModel.findById(id).lean();
-
-    if (!company) {
-      return res.status(404).json({
-        success: false,
-        message: "Company not found in Company collection.",
-      });
-    }
-
-    const jobs = await JobModel.find({
-      company: company._id,
-      isActive: true,
-    }).sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      company,
-      jobs,
-      jobCount: jobs.length,
-    });
-  } catch (error) {
-    console.error("Company Details Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch company details.",
     });
   }
 };
